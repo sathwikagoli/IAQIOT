@@ -297,11 +297,11 @@ function App() {
           </div>
           <div className="chart-toggles">
             <button className={`chart-toggle-btn aqi ${visibleCharts.aqi ? 'active' : ''}`} onClick={() => toggleChart('aqi')}>AQI</button>
-            <button className={`chart-toggle-btn co2 ${visibleCharts.co2 ? 'active' : ''}`} onClick={() => toggleChart('co2')}>CO2</button>
-            <button className={`chart-toggle-btn tvoc ${visibleCharts.tvoc ? 'active' : ''}`} onClick={() => toggleChart('tvoc')}>TVOC</button>
-            <button className={`chart-toggle-btn pm25 ${visibleCharts.pm25 ? 'active' : ''}`} onClick={() => toggleChart('pm25')}>PM 2.5</button>
-            <button className={`chart-toggle-btn pm10 ${visibleCharts.pm10 ? 'active' : ''}`} onClick={() => toggleChart('pm10')}>PM 10</button>
-            <button className={`chart-toggle-btn no2 ${visibleCharts.no2 ? 'active' : ''}`} onClick={() => toggleChart('no2')}>NO2</button>
+            <button className={`chart-toggle-btn co2 ${visibleCharts.co2 ? 'active' : ''}`} onClick={() => toggleChart('co2')}>CO2 (ppm)</button>
+            <button className={`chart-toggle-btn tvoc ${visibleCharts.tvoc ? 'active' : ''}`} onClick={() => toggleChart('tvoc')}>TVOC (ppb)</button>
+            <button className={`chart-toggle-btn pm25 ${visibleCharts.pm25 ? 'active' : ''}`} onClick={() => toggleChart('pm25')}>PM 2.5 (µg/m³)</button>
+            <button className={`chart-toggle-btn pm10 ${visibleCharts.pm10 ? 'active' : ''}`} onClick={() => toggleChart('pm10')}>PM 10 (µg/m³)</button>
+            <button className={`chart-toggle-btn no2 ${visibleCharts.no2 ? 'active' : ''}`} onClick={() => toggleChart('no2')}>NO2 (ppm)</button>
           </div>
         </div>
         <div style={{ width: '100%', height: '350px', position: 'relative' }}>
@@ -342,12 +342,12 @@ function App() {
                   contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                   labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
                 />
-                {visibleCharts.aqi && <Area yAxisId="left" type="monotone" dataKey="aqi" stroke="var(--accent-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorAqi)" />}
-                {visibleCharts.co2 && <Area yAxisId="right" type="monotone" dataKey="co2" stroke="var(--accent-secondary)" strokeWidth={2} fillOpacity={1} fill="url(#colorCo2)" />}
-                {visibleCharts.tvoc && <Area yAxisId="right" type="monotone" dataKey="tvoc" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTvoc)" />}
-                {visibleCharts.pm25 && <Area yAxisId="left" type="monotone" dataKey="pm25" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorPm25)" />}
-                {visibleCharts.pm10 && <Area yAxisId="left" type="monotone" dataKey="pm10" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />}
-                {visibleCharts.no2 && <Area yAxisId="left" type="monotone" dataKey="no2" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNo2)" />}            
+                {visibleCharts.aqi && <Area yAxisId="left" type="monotone" dataKey="aqi" name="AQI" stroke="var(--accent-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorAqi)" />}
+                {visibleCharts.co2 && <Area yAxisId="right" type="monotone" dataKey="co2" name="CO2 (ppm)" stroke="var(--accent-secondary)" strokeWidth={2} fillOpacity={1} fill="url(#colorCo2)" />}
+                {visibleCharts.tvoc && <Area yAxisId="right" type="monotone" dataKey="tvoc" name="TVOC (ppb)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTvoc)" />}
+                {visibleCharts.pm25 && <Area yAxisId="left" type="monotone" dataKey="pm25" name="PM 2.5 (µg/m³)" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorPm25)" />}
+                {visibleCharts.pm10 && <Area yAxisId="left" type="monotone" dataKey="pm10" name="PM 10 (µg/m³)" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />}
+                {visibleCharts.no2 && <Area yAxisId="left" type="monotone" dataKey="no2" name="NO2 (ppm)" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNo2)" />}            
               </AreaChart>
             </ResponsiveContainer>
           )}
