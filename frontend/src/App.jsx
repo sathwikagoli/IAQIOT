@@ -55,8 +55,7 @@ function App() {
     co2: true,
     tvoc: false,
     pm25: false,
-    pm10: false,
-    no2: false
+    pm10: false
   });
 
   const toggleChart = (key) => {
@@ -218,16 +217,13 @@ function App() {
   if (no2 === 0) si_no2 = 0;
   if (nh3 === 0) si_nh3 = 0;
 
-  // Recalculate AQI dynamically based on the corrected sub-indices
-  aqi = Math.max(si_co, si_no2, si_nh3, si_co2, si_tvoc, si_pm25, si_pm10);
+  // Recalculate AQI using ONLY reliable sensors (CO2, TVOC, PM2.5, PM10)
+  aqi = Math.max(si_co2, si_tvoc, si_pm25, si_pm10);
   
   if (aqi === si_pm25) dominant = "PM2.5";
   else if (aqi === si_pm10) dominant = "PM10";
   else if (aqi === si_co2) dominant = "CO2";
-  else if (aqi === si_tvoc) dominant = "TVOC";
-  else if (aqi === si_co) dominant = "CO";
-  else if (aqi === si_no2) dominant = "NO2";
-  else dominant = "NH3";
+  else dominant = "TVOC";
 
   return (
     <div className="app-container">
@@ -301,7 +297,6 @@ function App() {
             <button className={`chart-toggle-btn tvoc ${visibleCharts.tvoc ? 'active' : ''}`} onClick={() => toggleChart('tvoc')}>TVOC (ppb)</button>
             <button className={`chart-toggle-btn pm25 ${visibleCharts.pm25 ? 'active' : ''}`} onClick={() => toggleChart('pm25')}>PM 2.5 (µg/m³)</button>
             <button className={`chart-toggle-btn pm10 ${visibleCharts.pm10 ? 'active' : ''}`} onClick={() => toggleChart('pm10')}>PM 10 (µg/m³)</button>
-            <button className={`chart-toggle-btn no2 ${visibleCharts.no2 ? 'active' : ''}`} onClick={() => toggleChart('no2')}>NO2 (ppm)</button>
           </div>
         </div>
         <div style={{ width: '100%', height: '350px', position: 'relative' }}>
@@ -329,10 +324,6 @@ function App() {
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.6}/>
                     <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                   </linearGradient>
-                  <linearGradient id="colorNo2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.6}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
                 </defs>
                 <XAxis dataKey="timeStr" stroke="var(--text-secondary)" tick={{fontSize: 12}} />
                 <YAxis yAxisId="left" stroke="var(--text-secondary)" tick={{fontSize: 12}} />
@@ -347,7 +338,6 @@ function App() {
                 {visibleCharts.tvoc && <Area yAxisId="right" type="monotone" dataKey="tvoc" name="TVOC (ppb)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTvoc)" />}
                 {visibleCharts.pm25 && <Area yAxisId="left" type="monotone" dataKey="pm25" name="PM 2.5 (µg/m³)" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorPm25)" />}
                 {visibleCharts.pm10 && <Area yAxisId="left" type="monotone" dataKey="pm10" name="PM 10 (µg/m³)" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />}
-                {visibleCharts.no2 && <Area yAxisId="left" type="monotone" dataKey="no2" name="NO2 (ppm)" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorNo2)" />}            
               </AreaChart>
             </ResponsiveContainer>
           )}
