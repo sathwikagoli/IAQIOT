@@ -286,7 +286,7 @@ function App() {
             <div className="dot" style={{ backgroundColor: isConnected ? 'var(--status-good)' : 'var(--status-poor)'}}></div>
             {isConnected ? 'LIVE CLOUD CONNECTED' : 'OFFLINE'}
           </div>
-          {!hasLiveData && (
+          {!isViewingToday && (
             <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', background: 'var(--glass-bg)', padding: '0.25rem 0.75rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
               VIEWING PAST DATA
             </div>
