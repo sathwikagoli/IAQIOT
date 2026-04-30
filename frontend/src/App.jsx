@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import mqtt from 'mqtt';
 import { createClient } from '@supabase/supabase-js';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Wind, Thermometer, Droplets, Activity, AlertTriangle, CloudRain, ShieldAlert } from 'lucide-react';
 
 // 1. Supabase Support
@@ -29,6 +29,10 @@ function App() {
   // Date State for History Chart
   const [selectedDate, setSelectedDate] = useState(() => getLocalDateString());
   const [latestCloudRecord, setLatestCloudRecord] = useState(null);
+
+  // Averages Bar Chart State
+  const [aggPeriod, setAggPeriod] = useState("");
+  const [aggData, setAggData] = useState([]);
 
   // 1. Fetch ABSOLUTE latest record on mount (for immediate card population)
   useEffect(() => {
@@ -129,6 +133,51 @@ function App() {
 
     fetchHistory();
   }, [selectedDate]);
+
+  // 2b. Fetch Aggregate Averages
+  useEffect(() => {
+    const fetchAverages = async () => {
+      if (!aggPeriod) {
+        setAggData([]);
+        return;
+      }
+      
+      const days = parseInt(aggPeriod, 10);
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const startOfDayIST = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      
+      const endTs = Math.floor((startOfDayIST.getTime() - istOffsetMs) / 1000) + 86399;
+      const startTs = endTs - (days * 86400) + 1;
+
+      console.log(`Fetching averages from ${startTs} to ${endTs}`);
+
+      const { data, error } = await supabase.rpc('get_pollutant_averages', {
+        start_ts: startTs,
+        end_ts: endTs
+      });
+
+      if (error) {
+        console.error("RPC fetch error:", error.message);
+        return;
+      }
+
+      if (data && data.length > 0 && data[0].avg_aqi !== null) {
+        const row = data[0];
+        const chartData = [
+          { name: 'AQI', value: parseFloat(row.avg_aqi), color: 'var(--accent-primary)' },
+          { name: 'CO2 (ppm)', value: parseFloat(row.avg_co2), color: 'var(--accent-secondary)' },
+          { name: 'TVOC (ppb)', value: parseFloat(row.avg_tvoc), color: '#f59e0b' },
+          { name: 'PM 2.5 (µg/m³)', value: parseFloat(row.avg_pm25), color: '#ef4444' },
+          { name: 'PM 10 (µg/m³)', value: parseFloat(row.avg_pm10), color: '#ef4444' }
+        ];
+        setAggData(chartData);
+      } else {
+        setAggData([]);
+      }
+    };
+    fetchAverages();
+  }, [aggPeriod, selectedDate]);
 
   // 3. Real-time Subscription (Optional but powerful)
   useEffect(() => {
@@ -290,6 +339,17 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <h2 className="charts-title" style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Historical Trends Analytics</h2>
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="date-picker-input" />
+            <select 
+              value={aggPeriod} 
+              onChange={(e) => setAggPeriod(e.target.value)}
+              className="date-picker-input"
+              style={{ cursor: 'pointer' }}
+            >
+              <option value="">Period Averages: OFF</option>
+              <option value="7">Last 7 Days</option>
+              <option value="10">Last 10 Days</option>
+              <option value="15">Last 15 Days</option>
+            </select>
           </div>
           <div className="chart-toggles">
             <button className={`chart-toggle-btn aqi ${visibleCharts.aqi ? 'active' : ''}`} onClick={() => toggleChart('aqi')}>AQI</button>
@@ -342,6 +402,35 @@ function App() {
             </ResponsiveContainer>
           )}
         </div>
+
+        {aggPeriod && (
+          <div style={{ marginTop: '2rem', width: '100%', height: '350px', position: 'relative' }}>
+            <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)', textAlign: 'center' }}>Average Pollutant Levels ({aggPeriod} Days ending {selectedDate})</h3>
+            {aggData.length === 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+                <h3>No data for this period</h3>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="80%">
+                <BarChart data={aggData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" vertical={false} />
+                  <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{fontSize: 12}} />
+                  <YAxis stroke="var(--text-secondary)" tick={{fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                    formatter={(value) => [value, 'Average']}
+                  />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} label={{ position: 'top', fill: 'var(--text-primary)', fontSize: 13, fontWeight: 'bold' }}>
+                    {aggData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
