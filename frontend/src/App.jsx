@@ -252,17 +252,6 @@ function App() {
     return 'Severe';
   };
 
-  // Trigger alert toast when AQI crosses into Poor or worse
-  useEffect(() => {
-    if (aqi > 200 && aqi !== lastAlertedAqi.current) {
-      lastAlertedAqi.current = aqi;
-      const color = getCategoryColor(aqi);
-      const category = getCategoryText(aqi);
-      setAlert({ message: `Air Quality is ${category}! AQI: ${aqi}. Ventilate the room immediately.`, color, category });
-      // Auto-dismiss after 8 seconds
-      setTimeout(() => setAlert(null), 8000);
-    }
-  }, [aqi]);
 
   const isViewingToday = selectedDate === getLocalDateString();
   const hasLiveData = isViewingToday && liveData;
@@ -291,6 +280,17 @@ function App() {
   else if (aqi === si_pm10) dominant = "PM10";
   else if (aqi === si_co2) dominant = "CO2";
   else dominant = "TVOC";
+
+  // Trigger alert when AQI is Poor or worse (inline during render, guarded by ref to avoid re-triggering)
+  if (aqi > 200 && aqi !== lastAlertedAqi.current) {
+    lastAlertedAqi.current = aqi;
+    const alertColor = getCategoryColor(aqi);
+    const alertCategory = getCategoryText(aqi);
+    setTimeout(() => {
+      setAlert({ message: `Air Quality is ${alertCategory}! AQI: ${aqi}. Ventilate the room immediately.`, color: alertColor });
+      setTimeout(() => setAlert(null), 8000);
+    }, 0);
+  }
 
   return (
     <div className="app-container">
