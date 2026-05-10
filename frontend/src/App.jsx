@@ -34,6 +34,10 @@ function App() {
   const [aggPeriod, setAggPeriod] = useState("");
   const [aggData, setAggData] = useState([]);
 
+  // Alert State
+  const [alert, setAlert] = useState(null); // { message, color, category }
+  const lastAlertedAqi = React.useRef(null);
+
   // 1. Fetch ABSOLUTE latest record on mount (for immediate card population)
   useEffect(() => {
     const fetchLatest = async () => {
@@ -229,22 +233,36 @@ function App() {
     };
   }, []);
 
-  // Helper formatting for UI
+  // Helper formatting for UI — 6-tier color system from AQI reference chart
   const getCategoryColor = (aqi) => {
-    if (aqi <= 50) return 'var(--status-good)';
-    if (aqi <= 100) return 'var(--status-good)';
-    if (aqi <= 200) return 'var(--status-fair)';
-    return 'var(--status-poor)';
+    if (aqi <= 50)  return '#22c55e';  // Green  — Good
+    if (aqi <= 100) return '#06b6d4';  // Cyan   — Satisfactory
+    if (aqi <= 200) return '#f59e0b';  // Yellow — Mod. Polluted
+    if (aqi <= 300) return '#f97316';  // Orange — Poor
+    if (aqi <= 400) return '#ef4444';  // Red    — Very Poor
+    return '#a855f7';                  // Purple — Severe
   };
 
   const getCategoryText = (aqi) => {
-    if (aqi <= 50) return 'Good';
+    if (aqi <= 50)  return 'Good';
     if (aqi <= 100) return 'Satisfactory';
-    if (aqi <= 200) return 'Moderate';
+    if (aqi <= 200) return 'Moderately Polluted';
     if (aqi <= 300) return 'Poor';
     if (aqi <= 400) return 'Very Poor';
     return 'Severe';
   };
+
+  // Trigger alert toast when AQI crosses into Poor or worse
+  useEffect(() => {
+    if (aqi > 200 && aqi !== lastAlertedAqi.current) {
+      lastAlertedAqi.current = aqi;
+      const color = getCategoryColor(aqi);
+      const category = getCategoryText(aqi);
+      setAlert({ message: `Air Quality is ${category}! AQI: ${aqi}. Ventilate the room immediately.`, color, category });
+      // Auto-dismiss after 8 seconds
+      setTimeout(() => setAlert(null), 8000);
+    }
+  }, [aqi]);
 
   const isViewingToday = selectedDate === getLocalDateString();
   const hasLiveData = isViewingToday && liveData;
@@ -276,6 +294,21 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Toast Alert */}
+      {alert && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', gap: '0.75rem',
+          background: alert.color, color: '#fff', padding: '0.9rem 1.5rem',
+          borderRadius: '14px', boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+          fontWeight: 'bold', fontSize: '0.95rem', maxWidth: '90vw',
+          animation: 'fadeInDown 0.4s ease'
+        }}>
+          <AlertTriangle size={22} />
+          <span>{alert.message}</span>
+          <button onClick={() => setAlert(null)} style={{ background: 'rgba(255,255,255,0.25)', border: 'none', color: '#fff', borderRadius: '8px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontWeight: 'bold', marginLeft: '0.5rem' }}>✕</button>
+        </div>
+      )}
       <header className="header animate-fade-in" style={{ animationDelay: '0.1s' }}>
         <div>
           <h1>AeroSense Dashboard</h1>
@@ -298,7 +331,7 @@ function App() {
         <div className="glass-panel aqi-card animate-fade-in animate-pulse-glow" style={{ animationDelay: '0.2s' }}>
           <div className="icon-container" style={{ width: '60px', height: '60px', marginBottom: '1rem' }}><Wind size={32} /></div>
           <h2 className="aqi-label">Overall AQI</h2>
-          <div className="aqi-value-container"><span className="aqi-value">{aqi}</span></div>
+          <div className="aqi-value-container"><span className="aqi-value" style={{ color: getCategoryColor(aqi) }}>{aqi}</span></div>
           <div className="aqi-category" style={{ color: getCategoryColor(aqi) }}>{getCategoryText(aqi)}</div>
           <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Dominant: <strong style={{ color: 'var(--text-primary)'}}>{dominant}</strong></p>
         </div>
